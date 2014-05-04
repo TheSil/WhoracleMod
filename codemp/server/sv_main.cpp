@@ -515,7 +515,7 @@ if a user is interested in a server to do a full status
 ================
 */
 void SVC_Info( netadr_t from ) {
-	int		i, count, humans, bots, wDisable;
+	int		i, count, humans, wDisable;
 	char	*gamedir;
 	char	infostring[MAX_INFO_STRING];
 
@@ -555,15 +555,12 @@ void SVC_Info( netadr_t from ) {
 		return;
 
 	// don't count privateclients
-	count = humans = bots = 0;
+	count = humans = 0;
 	for ( i = sv_privateClients->integer ; i < sv_maxclients->integer ; i++ ) {
 		if ( svs.clients[i].state >= CS_CONNECTED ) {
 			count++;
 			if ( svs.clients[i].netchan.remoteAddress.type != NA_BOT ) {
 				humans++;
-			}
-			else if ( svs.clients[i].netchan.remoteAddress.type == NA_BOT ) {
-				bots++;
 			}
 		}
 	}
@@ -579,7 +576,7 @@ void SVC_Info( netadr_t from ) {
 	Info_SetValueForKey( infostring, "mapname", sv_mapname->string );
 	Info_SetValueForKey( infostring, "clients", va("%i", count) );
 	Info_SetValueForKey( infostring, "g_humanplayers", va("%i", humans) );
-	Info_SetValueForKey( infostring, "bots", va("%i", bots) );
+	Info_SetValueForKey( infostring, "bots", va("%i", count-humans) );
 	Info_SetValueForKey( infostring, "sv_maxclients",
 		va("%i", sv_maxclients->integer - sv_privateClients->integer ) );
 	Info_SetValueForKey( infostring, "gametype", va("%i", sv_gametype->integer ) );
