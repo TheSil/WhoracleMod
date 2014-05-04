@@ -1568,7 +1568,7 @@ void Com_Frame( void ) {
 			if ( lastTime > com_frameTime ) {
 				lastTime = com_frameTime;		// possible on first frame
 			}
-			msec = com_frameTime - lastTime;
+			msec = lastTime ? (com_frameTime - lastTime) : minMsec;
 		} while ( msec < minMsec );
 		Cbuf_Execute ();
 
