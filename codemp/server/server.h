@@ -192,6 +192,7 @@ typedef struct challenge_s {
 	int			clientChallenge;		// challenge number coming from the client
 	int			time;				// time the last packet was sent to the autherize server
 	int			pingTime;			// time the challenge response was sent to client
+	int			challengePing;      // time between challenge response and first connection attempt
 	int			firstTime;			// time the adr was first used, for authorize timeout checks
 	qboolean	wasrefused;
 	qboolean	connected;
