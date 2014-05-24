@@ -111,7 +111,7 @@ void SV_GetChallenge( netadr_t from ) {
 	challenge->wasrefused = qfalse;
 	challenge->time = svs.time;
 	challenge->pingTime = svs.time;
-	challenge->challengePing = -1;
+    challenge->connectionTime = 0;
 	NET_OutOfBandPrint( NS_SERVER, challenge->adr, "challengeResponse %i %i", challenge->challenge, clientChallenge );
 }
 
@@ -193,6 +193,7 @@ void SV_DirectConnect( netadr_t from ) {
 	// see if the challenge is valid (LAN clients don't need to challenge)
 	if (!NET_IsLocalAddress(from))
 	{
+        int ping;
 		challenge_t *challengeptr;
 
 		for (i=0; i<MAX_CHALLENGES; i++)
@@ -219,20 +220,22 @@ void SV_DirectConnect( netadr_t from ) {
 		}
 
 		// first connection attempt after challenge, save ping
-		if ( challengeptr->challengePing == -1 )
+        if ( !challengeptr->connectionTime )
 		{
-			challengeptr->challengePing = svs.time - challengeptr->pingTime;
+            challengeptr->connectionTime = svs.time;
 		}
+
+        ping = challengeptr->connectionTime - challengeptr->pingTime;
 
 		// never reject a LAN client based on ping
 		if ( !Sys_IsLANAddress( from ) ) {
-			if ( sv_minPing->value && challengeptr->challengePing < sv_minPing->value ) {
+			if ( sv_minPing->value && ping < sv_minPing->value ) {
 				NET_OutOfBandPrint( NS_SERVER, from, va("print\n%s\n", SE_GetString("MP_SVGAME", "SERVER_FOR_HIGH_PING")));//Server is for high pings only\n" );
 				Com_DPrintf (SE_GetString("MP_SVGAME", "CLIENT_REJECTED_LOW_PING"), i);//"Client %i rejected on a too low ping\n", i);
 				challengeptr->wasrefused = qtrue;
 				return;
 			}
-			if ( sv_maxPing->value && challengeptr->challengePing > sv_maxPing->value ) {
+			if ( sv_maxPing->value && ping > sv_maxPing->value ) {
 				NET_OutOfBandPrint( NS_SERVER, from, va("print\n%s\n", SE_GetString("MP_SVGAME", "SERVER_FOR_LOW_PING")));//Server is for low pings only\n" );
 				Com_DPrintf (SE_GetString("MP_SVGAME", "CLIENT_REJECTED_HIGH_PING"), i);//"Client %i rejected on a too high ping\n", i);
 				challengeptr->wasrefused = qtrue;
@@ -240,7 +243,7 @@ void SV_DirectConnect( netadr_t from ) {
 			}
 		}
 
-		Com_Printf( SE_GetString("MP_SVGAME", "CLIENT_CONN_WITH_PING"), i, challengeptr->challengePing);//"Client %i connecting with %i challenge ping\n", i, ping );
+		Com_Printf( SE_GetString("MP_SVGAME", "CLIENT_CONN_WITH_PING"), i, ping);//"Client %i connecting with %i challenge ping\n", i, ping );
 		challengeptr->connected = qtrue;
 	}
 
