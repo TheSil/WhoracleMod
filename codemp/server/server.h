@@ -1,3 +1,26 @@
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #pragma once
 
 #include "qcommon/q_shared.h"
@@ -64,11 +87,8 @@ typedef struct server_s {
 	char			*mSharedMemory;
 
 	time_t			realMapTimeStarted;	// time the current map was started
+	qboolean		demosPruned; // whether or not existing demos were cleaned up already
 } server_t;
-
-
-
-
 
 typedef struct clientSnapshot_s {
 	int				areabytes;
@@ -203,6 +223,7 @@ typedef struct serverStatic_s {
 	qboolean	initialized;				// sv_init has completed
 
 	int			time;						// will be strictly increasing across level changes
+	time_t		startTime;					// time since epoch the executable was started
 
 	int			snapFlagServerBit;			// ^= SNAPFLAG_SERVERCOUNT every SV_SpawnServer()
 
@@ -219,6 +240,16 @@ typedef struct serverStatic_s {
 	qboolean	gameStarted;				// gvm is loaded
 } serverStatic_t;
 
+#define SERVER_MAXBANS	1024
+// Structure for managing bans
+typedef struct serverBan_s {
+	netadr_t ip;
+	// For a CIDR-Notation type suffix
+	int subnet;
+
+	qboolean isexception;
+} serverBan_t;
+
 //=============================================================================
 
 extern	serverStatic_t	svs;				// persistant server info across maps
@@ -226,8 +257,6 @@ extern	server_t		sv;					// cleared each map
 
 //FIXME: dedi server probably can't have this..
 extern	refexport_t		*re;					// interface to refresh .dll
-
-#define	MAX_MASTER_SERVERS	5
 
 extern	cvar_t	*sv_snapsMin;
 extern	cvar_t	*sv_snapsMax;
@@ -262,6 +291,10 @@ extern	cvar_t	*sv_autoDemo;
 extern	cvar_t	*sv_autoDemoBots;
 extern	cvar_t	*sv_autoDemoMaxMaps;
 extern	cvar_t	*sv_blockJumpSelect;
+extern	cvar_t	*sv_banFile;
+
+extern	serverBan_t serverBans[SERVER_MAXBANS];
+extern	int serverBansCount;
 
 //===========================================================
 

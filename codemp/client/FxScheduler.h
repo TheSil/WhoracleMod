@@ -1,22 +1,35 @@
+/*
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #pragma once
 
 #include "FxUtil.h"
 #include "qcommon/GenericParser2.h"
 
-#ifdef _MSC_VER
-#pragma warning (push, 3)	//go back down to 3 for the stl include
-#endif
 #include <algorithm>
 #include <vector>
 #include <map>
 #include <list>
 #include <string>
-#ifdef _MSC_VER
-#pragma warning (pop)
-#endif
-
-using namespace std;
-
 
 #define FX_FILE_PATH	"effects"
 
@@ -65,13 +78,13 @@ class CMediaHandles
 {
 private:
 
-	vector<int>	mMediaList;
+	std::vector<int>	mMediaList;
 
 public:
 
 	void	AddHandle( int item )	{ mMediaList.push_back( item );	}
 	int		GetHandle()				{ if (mMediaList.size()==0) {return 0;}
-										else {return mMediaList[irand(0,mMediaList.size()-1)];} }
+										else {return mMediaList[irand(0,(int)mMediaList.size()-1)];} }
 
 	CMediaHandles &operator=(const CMediaHandles &that );
 };
@@ -377,7 +390,6 @@ public:
 	{
 		if ( numFree == 0 )
 		{
-			Com_Printf (S_COLOR_YELLOW "WARNING: Ran out of instances from memory pool.\n");
 			return NULL;
 		}
 
@@ -386,9 +398,27 @@ public:
 		std::rotate (freeAndAllocated, freeAndAllocated + 1, freeAndAllocated + N);
 		numFree--;
 
-		highWatermark = max (highWatermark, N - numFree);
+		highWatermark = Q_max(highWatermark, N - numFree);
 
 		return ptr;
+	}
+
+	void TransferTo ( PoolAllocator<T, N>& allocator )
+	{
+		allocator.freeAndAllocated = freeAndAllocated;
+		allocator.highWatermark = highWatermark;
+		allocator.numFree = numFree;
+		allocator.pool = pool;
+
+		highWatermark = 0;
+		numFree = N;
+		freeAndAllocated = NULL;
+		pool = NULL;
+	}
+
+	bool OwnsPtr ( const T *ptr ) const
+	{
+		return ptr >= pool && ptr < (pool + N);
 	}
 
 	void Free ( T *ptr )
@@ -428,6 +458,9 @@ public:
 	}
 
 private:
+	PoolAllocator ( const PoolAllocator<T, N>& );
+	PoolAllocator& operator = ( const PoolAllocator<T, N>& );
+
 	T *pool;
 
 	// The first 'numFree' elements are the indexes of the free slots.
@@ -436,6 +469,80 @@ private:
 	int numFree;
 
 	int highWatermark;
+};
+
+template<typename T, int N>
+class PagedPoolAllocator
+{
+	public:
+		PagedPoolAllocator ()
+			: numPages (1)
+			, pages (new PoolAllocator<T, N>[1]())
+		{
+		}
+
+		T *Alloc ()
+		{
+			T *ptr = NULL;
+			for ( int i = 0; i < numPages && ptr == NULL; i++ )
+			{
+				ptr = pages[i].Alloc ();
+			}
+
+			if ( ptr == NULL )
+			{
+				PoolAllocator<T, N> *newPages = new PoolAllocator<T, N>[numPages + 1] ();
+				for ( int i = 0; i < numPages; i++ )
+				{
+					pages[i].TransferTo (newPages[i]);
+				}
+
+				delete[] pages;
+				pages = newPages;
+				
+				ptr = pages[numPages].Alloc ();
+				if ( ptr == NULL )
+				{
+					return NULL;
+				}
+
+				numPages++;
+			}
+
+			return ptr;
+		}
+
+		void Free ( T *ptr )
+		{
+			for ( int i = 0; i < numPages; i++ )
+			{
+				if ( pages[i].OwnsPtr (ptr) )
+				{
+					pages[i].Free (ptr);
+					break;
+				}
+			}
+		}
+
+		int GetHighWatermark () const
+		{
+			int total = 0;
+			for ( int i = 0; i < numPages; i++ )
+			{
+				total += pages[i].GetHighWatermark ();
+			}
+
+			return total;
+		}
+
+		~PagedPoolAllocator ()
+		{
+			delete[] pages;
+		}
+
+	private:
+		int numPages;
+		PoolAllocator<T, N> *pages;
 };
 
 //-----------------------------------------------------------------
@@ -507,9 +614,9 @@ private:
 	};
 
 	// this makes looking up the index based on the string name much easier
-	typedef map<string, int>				TEffectID;
+	typedef std::map<std::string, int>				TEffectID;
 
-	typedef list<SScheduledEffect*>			TScheduledEffect;
+	typedef std::list<SScheduledEffect*>			TScheduledEffect;
 
 	// Effects
 	SEffectTemplate		mEffectTemplates[FX_MAX_EFFECTS];
@@ -522,7 +629,7 @@ private:
 	// List of scheduled effects that will need to be created at the correct time.
 	TScheduledEffect	mFxSchedule;
 
-	PoolAllocator<SScheduledEffect, 2048> mScheduledEffectsPool;
+	PagedPoolAllocator<SScheduledEffect, 1024> mScheduledEffectsPool;
 
 	// Private function prototypes
 	SEffectTemplate *GetNewEffectTemplate( int *id, const char *file );
@@ -559,7 +666,7 @@ public:
 	void	Draw2DEffects(float screenXScale, float screenYScale);
 
 	int		GetHighWatermark() const { return mScheduledEffectsPool.GetHighWatermark(); }
-	int		NumScheduledFx()	{ return mFxSchedule.size();	}
+	int		NumScheduledFx()	{ return (int)mFxSchedule.size();	}
 	void	Clean(bool bRemoveTemplates = true, int idToPreserve = 0);	// clean out the system
 
 	// FX Override functions

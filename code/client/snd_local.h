@@ -1,20 +1,25 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 // snd_local.h -- private sound definations
 
@@ -26,12 +31,16 @@ This file is part of Jedi Academy.
 #include "snd_public.h"
 #include "../mp3code/mp3struct.h"
 
+#if defined(_MSC_VER) && !defined(WIN64)
+#define USE_OPENAL
+#endif
+
 // Open AL Specific
-#ifdef _WIN32
-#include "openal\al.h"
-#include "openal\alc.h"
-#include "eax\eax.h"
-#include "eax\eaxman.h"
+#ifdef USE_OPENAL
+#include "OpenAL/al.h"
+#include "OpenAL/alc.h"
+#include "eax/eax.h"
+#include "eax/EaxMan.h"
 /*#elif defined MACOS_X
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
@@ -84,7 +93,7 @@ typedef struct sfx_s {
 	float			fVolRange;				// used to set the highest volume this sample has at load time - used for lipsynching
 
 	// Open AL
-#ifdef _WIN32
+#ifdef USE_OPENAL
 	ALuint		Buffer;
 #endif
 	char		*lipSyncData;
@@ -105,7 +114,7 @@ typedef struct {
 #define START_SAMPLE_IMMEDIATE	0x7fffffff
 
 // Open AL specific
-#ifdef _WIN32
+#ifdef USE_OPENAL
 typedef struct
 {
 	ALuint	BufferID;
@@ -151,7 +160,7 @@ typedef struct
 //	bool	bAmbient;	// Signifies if this channel / source is playing a looping ambient sound
 	bool	bProcessed;	// Signifies if this channel / source has been processed
 	bool	bStreaming;	// Set to true if the data needs to be streamed (MP3 or dialogue)
-#ifdef _WIN32
+#ifdef USE_OPENAL
 	STREAMINGBUFFER	buffers[NUM_STREAMING_BUFFERS];	// AL Buffers for streaming
 	ALuint		alSource;		// Open AL Source
 #endif
@@ -206,9 +215,6 @@ extern	channel_t   s_channels[MAX_CHANNELS];
 extern	int		s_paintedtime;
 extern	int		s_rawend;
 extern	vec3_t	listener_origin;
-extern	vec3_t	listener_forward;
-extern	vec3_t	listener_right;
-extern	vec3_t	listener_up;
 extern	dma_t	dma;
 
 #define	MAX_RAW_SAMPLES	16384

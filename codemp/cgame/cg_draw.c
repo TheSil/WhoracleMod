@@ -1,5 +1,26 @@
-// Copyright (C) 1999-2000 Id Software, Inc.
-//
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 // cg_draw.c -- draw all of the graphical elements during
 // active (after loading) gameplay
 
@@ -154,56 +175,6 @@ void CG_Text_Paint(float x, float y, float scale, vec4_t color, const char *text
 							scale	// const float scale = 1.0f
 							);
 }
-
-/*
-qboolean CG_WorldCoordToScreenCoord(vec3_t worldCoord, int *x, int *y)
-
-  Take any world coord and convert it to a 2D virtual 640x480 screen coord
-*/
-/*
-qboolean CG_WorldCoordToScreenCoordFloat(vec3_t worldCoord, float *x, float *y)
-{
-	int	xcenter, ycenter;
-	vec3_t	local, transformed;
-
-//	xcenter = cg.refdef.width / 2;//gives screen coords adjusted for resolution
-//	ycenter = cg.refdef.height / 2;//gives screen coords adjusted for resolution
-
-	//NOTE: did it this way because most draw functions expect virtual 640x480 coords
-	//	and adjust them for current resolution
-	xcenter = 640 / 2;//gives screen coords in virtual 640x480, to be adjusted when drawn
-	ycenter = 480 / 2;//gives screen coords in virtual 640x480, to be adjusted when drawn
-
-	VectorSubtract (worldCoord, cg.refdef.vieworg, local);
-
-	transformed[0] = DotProduct(local,vright);
-	transformed[1] = DotProduct(local,vup);
-	transformed[2] = DotProduct(local,vfwd);
-
-	// Make sure Z is not negative.
-	if(transformed[2] < 0.01)
-	{
-		return qfalse;
-	}
-	// Simple convert to screen coords.
-	float xzi = xcenter / transformed[2] * (90.0/cg.refdef.fov_x);
-	float yzi = ycenter / transformed[2] * (90.0/cg.refdef.fov_y);
-
-	*x = xcenter + xzi * transformed[0];
-	*y = ycenter - yzi * transformed[1];
-
-	return qtrue;
-}
-
-qboolean CG_WorldCoordToScreenCoord( vec3_t worldCoord, int *x, int *y )
-{
-	float	xF, yF;
-	qboolean retVal = CG_WorldCoordToScreenCoordFloat( worldCoord, &xF, &yF );
-	*x = (int)xF;
-	*y = (int)yF;
-	return retVal;
-}
-*/
 
 /*
 ================
@@ -1161,7 +1132,14 @@ void CG_DrawForcePower( menuDef_t *menuHUD )
 	if (focusItem)
 	{
 		// Print force amount
-		trap->R_SetColor( focusItem->window.foreColor );
+		if ( flash )
+		{
+			trap->R_SetColor( colorTable[CT_RED] );
+		}
+		else
+		{
+			trap->R_SetColor( focusItem->window.foreColor );
+		}
 
 		CG_DrawNumField (
 			focusItem->window.rect.x,
@@ -1173,6 +1151,168 @@ void CG_DrawForcePower( menuDef_t *menuHUD )
 			NUM_FONT_SMALL,
 			qfalse);
 	}
+}
+
+static void CG_DrawSimpleSaberStyle( const centity_t *cent )
+{
+	uint32_t	calcColor;
+	char		num[7] = { 0 };
+	int			weapX = 16;
+
+	if ( !cent->currentState.weapon ) // We don't have a weapon right now
+	{
+		return;
+	}
+
+	if ( cent->currentState.weapon != WP_SABER )
+	{
+		return;
+	}
+
+	switch ( cg.predictedPlayerState.fd.saberDrawAnimLevel )
+	{
+	default:
+	case SS_FAST:
+		Com_sprintf( num, sizeof( num ), "FAST" );
+		calcColor = CT_ICON_BLUE;
+		weapX = 0;
+		break;
+	case SS_MEDIUM:
+		Com_sprintf( num, sizeof( num ), "MEDIUM" );
+		calcColor = CT_YELLOW;
+		break;
+	case SS_STRONG:
+		Com_sprintf( num, sizeof( num ), "STRONG" );
+		calcColor = CT_HUD_RED;
+		break;
+	case SS_DESANN:
+		Com_sprintf( num, sizeof( num ), "DESANN" );
+		calcColor = CT_HUD_RED;
+		break;
+	case SS_TAVION:
+		Com_sprintf( num, sizeof( num ), "TAVION" );
+		calcColor = CT_ICON_BLUE;
+		break;
+	case SS_DUAL:
+		Com_sprintf( num, sizeof( num ), "AKIMBO" );
+		calcColor = CT_HUD_ORANGE;
+		break;
+	case SS_STAFF:
+		Com_sprintf( num, sizeof( num ), "STAFF" );
+		calcColor = CT_HUD_ORANGE;
+		break;
+	}
+
+	CG_DrawProportionalString( SCREEN_WIDTH - (weapX + 16 + 32), (SCREEN_HEIGHT - 80) + 40, num, UI_SMALLFONT | UI_DROPSHADOW, colorTable[calcColor] );
+}
+
+static void CG_DrawSimpleAmmo( const centity_t *cent )
+{
+	playerState_t	*ps;
+	uint32_t	calcColor;
+	int			currValue = 0;
+	char		num[16] = { 0 };
+
+	if ( !cent->currentState.weapon ) // We don't have a weapon right now
+	{
+		return;
+	}
+
+	ps = &cg.snap->ps;
+
+	currValue = ps->ammo[weaponData[cent->currentState.weapon].ammoIndex];
+
+	// No ammo
+	if ( currValue < 0 || (weaponData[cent->currentState.weapon].energyPerShot == 0 && weaponData[cent->currentState.weapon].altEnergyPerShot == 0) )
+	{
+		CG_DrawProportionalString( SCREEN_WIDTH - (16 + 32), (SCREEN_HEIGHT - 80) + 40, "--", UI_SMALLFONT | UI_DROPSHADOW, colorTable[CT_HUD_ORANGE] );
+		return;
+	}
+
+	//
+	// ammo
+	//
+	if ( cg.oldammo < currValue )
+	{
+		cg.oldAmmoTime = cg.time + 200;
+	}
+
+	cg.oldammo = currValue;
+
+	// Determine the color of the numeric field
+
+	// Firing or reloading?
+	if ( (cg.predictedPlayerState.weaponstate == WEAPON_FIRING
+		&& cg.predictedPlayerState.weaponTime > 100) )
+	{
+		calcColor = CT_LTGREY;
+	}
+	else
+	{
+		if ( currValue > 0 )
+		{
+			if ( cg.oldAmmoTime > cg.time )
+			{
+				calcColor = CT_YELLOW;
+			}
+			else
+			{
+				calcColor = CT_HUD_ORANGE;
+			}
+		}
+		else
+		{
+			calcColor = CT_RED;
+		}
+	}
+
+	Com_sprintf( num, sizeof( num ), "%i", currValue );
+
+	CG_DrawProportionalString( SCREEN_WIDTH - (16 + 32), (SCREEN_HEIGHT - 80) + 40, num, UI_SMALLFONT | UI_DROPSHADOW, colorTable[calcColor] );
+}
+
+static void CG_DrawSimpleForcePower( const centity_t *cent )
+{
+	uint32_t	calcColor;
+	char		num[16] = { 0 };
+	qboolean	flash = qfalse;
+
+	if ( !cg.snap->ps.fd.forcePowersKnown )
+	{
+		return;
+	}
+
+	// Make the hud flash by setting forceHUDTotalFlashTime above cg.time
+	if ( cg.forceHUDTotalFlashTime > cg.time )
+	{
+		flash = qtrue;
+		if ( cg.forceHUDNextFlashTime < cg.time )
+		{
+			cg.forceHUDNextFlashTime = cg.time + 400;
+			trap->S_StartSound( NULL, 0, CHAN_LOCAL, cgs.media.noforceSound );
+			if ( cg.forceHUDActive )
+			{
+				cg.forceHUDActive = qfalse;
+			}
+			else
+			{
+				cg.forceHUDActive = qtrue;
+			}
+
+		}
+	}
+	else	// turn HUD back on if it had just finished flashing time.
+	{
+		cg.forceHUDNextFlashTime = 0;
+		cg.forceHUDActive = qtrue;
+	}
+
+	// Determine the color of the numeric field
+	calcColor = flash ? CT_RED : CT_ICON_BLUE;
+
+	Com_sprintf( num, sizeof( num ), "%i", cg.snap->ps.fd.forcePower );
+
+	CG_DrawProportionalString( SCREEN_WIDTH - (18 + 14 + 32), (SCREEN_HEIGHT - 80) + 40 + 14, num, UI_SMALLFONT | UI_DROPSHADOW, colorTable[calcColor] );
 }
 
 /*
@@ -1192,8 +1332,6 @@ void CG_DrawHUD(centity_t	*cent)
 	{
 		int x = 0;
 		int y = SCREEN_HEIGHT-80;
-		char ammoString[64];
-		int weapX = x;
 
 		if (cg.predictedPlayerState.pm_type != PM_SPECTATOR)
 		{
@@ -1201,45 +1339,14 @@ void CG_DrawHUD(centity_t	*cent)
 
 			CG_DrawProportionalString( x+18+14, y+40+14, va( "%i", cg.snap->ps.stats[STAT_ARMOR] ), UI_SMALLFONT|UI_DROPSHADOW, colorTable[CT_HUD_GREEN] );
 
-			if (cg.snap->ps.weapon == WP_SABER)
-			{
-				if (cg.snap->ps.fd.saberDrawAnimLevel == SS_DUAL)
-				{
-					Com_sprintf(ammoString, sizeof(ammoString), "AKIMBO");
-					weapX += 16;
-				}
-				else if (cg.snap->ps.fd.saberDrawAnimLevel == SS_STAFF)
-				{
-					Com_sprintf(ammoString, sizeof(ammoString), "STAFF");
-					weapX += 16;
-				}
-				else if (cg.snap->ps.fd.saberDrawAnimLevel == FORCE_LEVEL_3)
-				{
-					Com_sprintf(ammoString, sizeof(ammoString), "STRONG");
-					weapX += 16;
-				}
-				else if (cg.snap->ps.fd.saberDrawAnimLevel == FORCE_LEVEL_2)
-				{
-					Com_sprintf(ammoString, sizeof(ammoString), "MEDIUM");
-					weapX += 16;
-				}
-				else
-				{
-					Com_sprintf(ammoString, sizeof(ammoString), "FAST");
-				}
-			}
-			else if (weaponData[cent->currentState.weapon].energyPerShot == 0 && weaponData[cent->currentState.weapon].altEnergyPerShot == 0)
-			{
-				Q_strncpyz(ammoString, "--", sizeof(ammoString));
-			}
+			CG_DrawSimpleForcePower( cent );
+
+			if ( cent->currentState.weapon == WP_SABER )
+				CG_DrawSimpleSaberStyle( cent );
 			else
-			{
-				Com_sprintf(ammoString, sizeof(ammoString), "%i", cg.snap->ps.ammo[weaponData[cent->currentState.weapon].ammoIndex]);
-			}
+				CG_DrawSimpleAmmo( cent );
 
-			CG_DrawProportionalString( SCREEN_WIDTH-(weapX+16+32), y+40, va( "%s", ammoString ), UI_SMALLFONT|UI_DROPSHADOW, colorTable[CT_HUD_ORANGE] );
-
-			CG_DrawProportionalString( SCREEN_WIDTH-(x+18+14+32), y+40+14, va( "%i", cg.snap->ps.fd.forcePower), UI_SMALLFONT|UI_DROPSHADOW, colorTable[CT_ICON_BLUE] );
+			//TODO Add score line
 		}
 
 		return;
@@ -2802,10 +2909,10 @@ static float CG_DrawMiniScoreboard ( float y )
 
 	if ( cgs.gametype >= GT_TEAM )
 	{
-		strcpy ( temp, va("%s: ", CG_GetStringEdString("MP_INGAME", "RED")));
-		Q_strcat ( temp, MAX_QPATH, cgs.scores1==SCORE_NOT_PRESENT?"-":(va("%i",cgs.scores1)) );
-		Q_strcat ( temp, MAX_QPATH, va(" %s: ", CG_GetStringEdString("MP_INGAME", "BLUE")) );
-		Q_strcat ( temp, MAX_QPATH, cgs.scores2==SCORE_NOT_PRESENT?"-":(va("%i",cgs.scores2)) );
+		Q_strncpyz( temp, va( "%s: ", CG_GetStringEdString( "MP_INGAME", "RED" ) ), sizeof( temp ) );
+		Q_strcat( temp, sizeof( temp ), cgs.scores1 == SCORE_NOT_PRESENT ? "-" : (va( "%i", cgs.scores1 )) );
+		Q_strcat( temp, sizeof( temp ), va( " %s: ", CG_GetStringEdString( "MP_INGAME", "BLUE" ) ) );
+		Q_strcat( temp, sizeof( temp ), cgs.scores2 == SCORE_NOT_PRESENT ? "-" : (va( "%i", cgs.scores2 )) );
 
 		CG_Text_Paint( 630 - CG_Text_Width ( temp, 0.7f, FONT_MEDIUM ) + xOffset, y, 0.7f, colorWhite, temp, 0, 0, ITEM_TEXTSTYLE_SHADOWEDMORE, FONT_MEDIUM );
 		y += 15;
@@ -7450,7 +7557,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson)
 			{
-				CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, hcolor);
+				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
 			}
 
 			cgRageFadeTime = 0;
@@ -7505,7 +7612,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson && rageTime)
 			{
-				CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, hcolor);
+				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
 			}
 			else
 			{
@@ -7515,7 +7622,7 @@ static void CG_Draw2DScreenTints( void )
 					hcolor[0] = 0.2f;
 					hcolor[1] = 0.2f;
 					hcolor[2] = 0.2f;
-					CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, hcolor);
+					CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
 				}
 				cgRageTime = 0;
 			}
@@ -7547,7 +7654,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson)
 			{
-				CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, hcolor);
+				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
 			}
 
 			cgRageRecFadeTime = 0;
@@ -7581,7 +7688,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson && rageRecTime)
 			{
-				CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, hcolor);
+				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
 			}
 			else
 			{
@@ -7616,7 +7723,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson)
 			{
-				CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, hcolor);
+				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
 			}
 
 			cgAbsorbFadeTime = 0;
@@ -7650,7 +7757,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson && absorbTime)
 			{
-				CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, hcolor);
+				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
 			}
 			else
 			{
@@ -7685,7 +7792,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson)
 			{
-				CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, hcolor);
+				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
 			}
 
 			cgProtectFadeTime = 0;
@@ -7719,7 +7826,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson && protectTime)
 			{
-				CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, hcolor);
+				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
 			}
 			else
 			{
@@ -7759,7 +7866,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson)
 			{
-				CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, hcolor);
+				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
 			}
 
 			cgYsalFadeTime = 0;
@@ -7793,7 +7900,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson && ysalTime)
 			{
-				CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, hcolor);
+				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
 			}
 			else
 			{
@@ -7810,7 +7917,7 @@ static void CG_Draw2DScreenTints( void )
 		hcolor[1] = 0;
 		hcolor[2] = 0;
 
-		CG_DrawRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, hcolor  );
+		CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
 	}
 	else if ( (cg.refdef.viewContents&CONTENTS_SLIME) )
 	{//tint screen green
@@ -7820,7 +7927,7 @@ static void CG_Draw2DScreenTints( void )
 		hcolor[1] = 0.7f;
 		hcolor[2] = 0;
 
-		CG_DrawRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, hcolor  );
+		CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
 	}
 	else if ( (cg.refdef.viewContents&CONTENTS_WATER) )
 	{//tint screen light blue -- FIXME: don't do this if CONTENTS_FOG? (in case someone *does* make a water shader with fog in it?)
@@ -7830,7 +7937,7 @@ static void CG_Draw2DScreenTints( void )
 		hcolor[1] = 0.2f;
 		hcolor[2] = 0.8f;
 
-		CG_DrawRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, hcolor  );
+		CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
 	}
 }
 
@@ -8024,7 +8131,7 @@ static void CG_Draw2D( void ) {
 		hcolor[1] = 0;
 		hcolor[2] = 0;
 
-		CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, hcolor);
+		CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
 
 		if (!gCGHasFallVector)
 		{
@@ -8109,7 +8216,7 @@ static void CG_Draw2D( void ) {
 				}
 			}
 
-			strcpy(pStr, va("%s %i...", CG_GetStringEdString("MP_INGAME", "ROUNDBEGINSIN"), rTime));
+			Q_strncpyz(pStr, va("%s %i...", CG_GetStringEdString("MP_INGAME", "ROUNDBEGINSIN"), rTime), sizeof(pStr));
 			CG_CenterPrint(pStr, SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH);
 			//same
 			break;
@@ -8335,6 +8442,9 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 	if ( separation != 0 ) {
 		VectorMA( cg.refdef.vieworg, -separation, cg.refdef.viewaxis[1], cg.refdef.vieworg );
 	}
+
+	if ( cg.snap->ps.fd.forcePowersActive & (1 << FP_SEE) )
+		cg.refdef.rdflags |= RDF_ForceSightOn;
 
 	cg.refdef.rdflags |= RDF_DRAWSKYBOX;
 

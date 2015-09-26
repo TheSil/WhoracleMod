@@ -2,9 +2,8 @@
 This file is part of Jedi Academy.
 
     Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+    it under the terms of the GNU General Public License version 2
+    as published by the Free Software Foundation.
 
     Jedi Academy is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -1652,10 +1651,10 @@ void GLimp_Init( void )
 
 	// save off hInstance and wndproc
 	cv = ri.Cvar_Get( "win_hinstance", "", 0 );
-	sscanf( cv->string, "%i", (int *)&tr.wv->hInstance );
+	sscanf( cv->string, "%p", (uintptr_t *)&tr.wv->hInstance );
 
 	cv = ri.Cvar_Get( "win_wndproc", "", 0 );
-	sscanf( cv->string, "%i", (int *)&glw_state.wndproc );
+	sscanf( cv->string, "%p", (uintptr_t *)&glw_state.wndproc );
 
 	r_allowSoftwareGL = ri.Cvar_Get( "r_allowSoftwareGL", "0", CVAR_LATCH );
 
@@ -1684,7 +1683,7 @@ void GLimp_Init( void )
 	//
 	// chipset specific configuration
 	//
-	strcpy( buf, glConfig.renderer_string );
+	Q_strncpyz( buf, glConfig.renderer_string, sizeof(buf) );
 	strlwr( buf );
 
 	//

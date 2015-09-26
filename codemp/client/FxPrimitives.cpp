@@ -1,6 +1,24 @@
-// this include must remain at the top of every CPP file
-//Anything above this #include will be ignored by the compiler
-#include "qcommon/exe_headers.h"
+/*
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
 
 #include "client.h"
 #include "cl_cgameapi.h"
@@ -209,32 +227,7 @@ bool CParticle::UpdateOrigin(void)
 	// Only perform physics if this object is tagged to do so
 	if ( (mFlags & FX_APPLY_PHYSICS) && !(mFlags & FX_PLAYER_VIEW) )
 	{
-		bool solid;
-
 		if ( mFlags & FX_EXPENSIVE_PHYSICS )
-		{
-			solid = true; // by setting this to true, we force a real trace to happen
-		}
-		else
-		{
-			// if this returns solid, we need to do a trace
-			if (!com_RMG || com_RMG->integer)
-			{	// don't do this call for RMG maps
-				TCGPointContents	*data = (TCGPointContents *)cl.mSharedMemory;
-
-				VectorCopy(new_origin, data->mPoint);
-				data->mPassEntityNum = ENTITYNUM_WORLD;
-
-				// if this returns solid, we need to do a trace
-				solid = !!(CGVM_PointContents() & MASK_SOLID);
-			}
-			else
-			{
-				solid = false;
-			}
-		}
-
-		if ( solid )
 		{
 			trace_t	trace;
 			float	dot;

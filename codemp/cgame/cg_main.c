@@ -1,5 +1,27 @@
-// Copyright (C) 1999-2000 Id Software, Inc.
-//
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 // cg_main.c -- initialization and primary entry point for cgame
 #include "cg_local.h"
 
@@ -1115,8 +1137,6 @@ static void CG_RegisterGraphics( void ) {
 	int			i;
 	int			breakPoint;
 	char		items[MAX_ITEMS+1];
-	const char	*terrainInfo;
-	int			terrainID;
 
 	static char		*sb_nums[11] = {
 		"gfx/2d/numbers/zero",
@@ -1528,23 +1548,6 @@ Ghoul2 Insert Start
 			}
 			breakPoint++;
 		}
-	}
-
-//	CG_LoadingString( "Creating terrain" );
-	for(i = 0; i < MAX_TERRAINS; i++)
-	{
-		terrainInfo = CG_ConfigString( CS_TERRAINS + i );
-		if ( !terrainInfo[0] )
-		{
-			break;
-		}
-
-		terrainID = trap->CM_RegisterTerrain(terrainInfo);
-
-		trap->RMG_Init(terrainID, terrainInfo);
-
-		// Send off the terrainInfo to the renderer
-		trap->RE_InitRendererTerrain( terrainInfo );
 	}
 
 	/*
@@ -2209,27 +2212,25 @@ static int CG_OwnerDrawWidth(int ownerDraw, float scale) {
 	  case CG_BLUE_NAME:
 			return CG_Text_Width(DEFAULT_BLUETEAM_NAME/*cg_blueTeamName.string*/, scale, FONT_MEDIUM);
 			break;
-
-
 	}
 	return 0;
 }
 
 static int CG_PlayCinematic(const char *name, float x, float y, float w, float h) {
-  return trap->CIN_PlayCinematic(name, x, y, w, h, CIN_loop);
+	return trap->CIN_PlayCinematic(name, x, y, w, h, CIN_loop);
 }
 
 static void CG_StopCinematic(int handle) {
-  trap->CIN_StopCinematic(handle);
+	trap->CIN_StopCinematic(handle);
 }
 
 static void CG_DrawCinematic(int handle, float x, float y, float w, float h) {
-  trap->CIN_SetExtents(handle, x, y, w, h);
-  trap->CIN_DrawCinematic(handle);
+	trap->CIN_SetExtents(handle, x, y, w, h);
+	trap->CIN_DrawCinematic(handle);
 }
 
 static void CG_RunCinematicFrame(int handle) {
-  trap->CIN_RunCinematic(handle);
+	trap->CIN_RunCinematic(handle);
 }
 
 /*

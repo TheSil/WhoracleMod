@@ -1,10 +1,28 @@
+/*
+===========================================================================
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 // cl_cgameapi.cpp  -- client system interaction with client game
-//Anything above this #include will be ignored by the compiler
-#include "qcommon/exe_headers.h"
+#include "qcommon/cm_public.h"
 #include "qcommon/RoffSystem.h"
 #include "qcommon/stringed_ingame.h"
 #include "qcommon/timing.h"
-#include "RMG/RM_Headers.h"
 #include "client.h"
 #include "cl_uiapi.h"
 #include "botlib/botlib.h"
@@ -326,7 +344,7 @@ static void CL_AddReliableCommand2( const char *cmd ) {
 }
 
 static int CL_CM_RegisterTerrain( const char *config ) {
-	return CM_RegisterTerrain( config, false )->GetTerrainId();
+	return 0;
 }
 
 extern int s_entityWavVol[MAX_GENTITIES];
@@ -420,20 +438,7 @@ static int CL_PrecisionTimerEnd( void *p ) {
 	return r; //return the result
 }
 
-static void CL_RMG_Init( int terrainID, const char *terrainInfo ) {
-	if ( !com_sv_running->integer ) {
-		if ( !TheRandomMissionManager )
-			TheRandomMissionManager = new CRMManager;
-		TheRandomMissionManager->SetLandScape( cmg.landScape );
-		if ( TheRandomMissionManager->LoadMission( qfalse ) ) {
-			if ( !TheRandomMissionManager->SpawnMission( qfalse ) )
-				Com_Error( ERR_DROP, "Error spawning mission for terrain" );
-		}
-		cmg.landScape->UpdatePatches();
-	}
-	RM_CreateRandomModels( terrainID, terrainInfo );
-//	TheRandomMissionManager->CreateMap();
-}
+static void CL_RMG_Init( int /* terrainID */, const char * /* terrainInfo */ ) { }
 
 static qboolean CGFX_PlayBoltedEffectID( int id, vec3_t org, void *ghoul2, const int boltNum, const int entNum, const int modelNum, int iLooptime, qboolean isRelative ) {
 	CGhoul2Info_v &g2 = *((CGhoul2Info_v *)ghoul2);
@@ -1608,14 +1613,12 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		return 0;
 
 	case CG_CM_REGISTER_TERRAIN:
-		return CL_CM_RegisterTerrain( (const char *)VMA(1) );
+		return 0;
 
 	case CG_RMG_INIT:
-		CL_RMG_Init( args[1], (const char *)VMA(2) );
 		return 0;
 
 	case CG_RE_INIT_RENDERER_TERRAIN:
-		re->InitRendererTerrain((const char *)VMA(1));
 		return 0;
 
 	case CG_R_WEATHER_CONTENTS_OVERRIDE:
@@ -1637,11 +1640,14 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	return 0;
 }
 
+// Stub function for old RMG system.
+static void RE_InitRendererTerrain ( const char * /*info*/ ) {}
+
 void CL_BindCGame( void ) {
 	static cgameImport_t cgi;
 	cgameExport_t		*ret;
 	GetCGameAPI_t		GetCGameAPI;
-	char				dllName[MAX_OSPATH] = "cgame"ARCH_STRING DLL_EXT;
+	char				dllName[MAX_OSPATH] = "cgame" ARCH_STRING DLL_EXT;
 
 	memset( &cgi, 0, sizeof( cgi ) );
 
@@ -1745,7 +1751,7 @@ void CL_BindCGame( void ) {
 		cgi.R_SetRangedFog						= re->SetRangedFog;
 		cgi.R_SetRefractionProperties			= re->SetRefractionProperties;
 		cgi.R_WorldEffectCommand				= re->WorldEffectCommand;
-		cgi.RE_InitRendererTerrain				= re->InitRendererTerrain;
+		cgi.RE_InitRendererTerrain				= RE_InitRendererTerrain;
 		cgi.WE_AddWeatherZone					= re->AddWeatherZone;
 		cgi.GetCurrentSnapshotNumber			= CL_GetCurrentSnapshotNumber;
 		cgi.GetCurrentCmdNumber					= CL_GetCurrentCmdNumber;

@@ -1,25 +1,28 @@
 /*
-This file is part of Jedi Academy.
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-    Jedi Academy is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+This file is part of the OpenJK source code.
 
-    Jedi Academy is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
 
-    You should have received a copy of the GNU General Public License
-    along with Jedi Academy.  If not, see <http://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
 */
-// Copyright 2001-2013 Raven Software
 
 // client.h -- primary header for client
 #pragma once
-#ifndef __CLIENT_H__
-#define __CLIENT_H__
 
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
@@ -262,6 +265,8 @@ extern	cvar_t	*cl_freelook;
 extern	cvar_t	*cl_mouseAccel;
 extern	cvar_t	*cl_showMouseRate;
 
+extern	cvar_t	*cl_allowAltEnter;
+
 extern	cvar_t	*cl_inGameVideo;
 
 extern	cvar_t	*m_pitch;
@@ -272,9 +277,7 @@ extern	cvar_t	*m_filter;
 
 extern	cvar_t	*cl_activeAction;
 
-#ifndef _WIN32
 extern	cvar_t	*cl_consoleKeys;
-#endif
 
 //=================================================
 
@@ -289,8 +292,6 @@ void CL_AddReliableCommand( const char *cmd );
 void CL_Disconnect_f (void);
 void CL_Vid_Restart_f( void );
 void CL_Snd_Restart_f (void);
-
-void CL_NextDemo( void );
 
 qboolean CL_CheckPaused(void);
 
@@ -373,6 +374,10 @@ void	SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, 
 void	SCR_DrawBigChar( int x, int y, int ch );
 void	SCR_DrawSmallChar( int x, int y, int ch );
 
+#ifdef JK2_MODE
+void	SCR_PrecacheScreenshot();
+#endif
+
 //
 // cl_cin.c
 //
@@ -397,6 +402,7 @@ void CIN_CloseAllVideos(void);
 //
 // cl_cgame.c
 //
+qboolean CL_InitCGameVM( void *gameLibrary );
 void CL_InitCGame( void );
 void CL_ShutdownCGame( void );
 qboolean CL_GameCommand( void );
@@ -415,5 +421,3 @@ void CL_DataPad_f(void);
 void CL_EndScreenDissolve_f(void);
 int Key_GetCatcher( void );
 void Key_SetCatcher( int catcher );
-
-#endif //__CLIENT_H__
