@@ -210,6 +210,19 @@ void CG_ParseServerinfo( void ) {
 	trap->Cvar_Set("cg_siegeTeam2", Info_ValueForKey(info, "g_siegeTeam2"));
 
 	Q_strncpyz( cgs.voteString, CG_ConfigString( CS_VOTE_STRING ), sizeof( cgs.voteString ) );
+	cgs.voteYes = atoi(CG_ConfigString(CS_VOTE_YES));
+	cgs.voteNo = atoi(CG_ConfigString(CS_VOTE_NO));
+	cgs.voteTime = atoi(CG_ConfigString(CS_VOTE_TIME));
+
+	for (i = 0; i < 2; ++i)
+	{
+		Q_strncpyz(cgs.teamVoteString[i], CG_ConfigString(CS_TEAMVOTE_STRING + i), sizeof(cgs.teamVoteString[i]));
+		cgs.teamVoteNo[i] = atoi(CG_ConfigString(CS_TEAMVOTE_YES + i));
+		cgs.teamVoteYes[i] = atoi(CG_ConfigString(CS_TEAMVOTE_NO + i));
+		cgs.teamVoteTime[i] = atoi(CG_ConfigString(CS_TEAMVOTE_TIME + i));
+	}
+
+	cg.intermissionStarted = atoi(CG_ConfigString(CS_INTERMISSION));
 
 	// synchronise our expected snaps/sec with the server's framerate
 	i = atoi( Info_ValueForKey( info, "sv_fps" ) );
