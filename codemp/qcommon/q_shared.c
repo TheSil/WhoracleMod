@@ -1187,6 +1187,53 @@ void Q_StripColor(char *text)
 }
 
 /*
+==================
+Q_StripSpaces
+
+Strips leading spaces: "^2  fgs^^56fds" -> "^2fgs^6fds"
+
+This function modifies INPUT (is mutable)
+
+==================
+*/
+void Q_StripSpaces(char *text)
+{
+	char* srcChar = text;
+	char* destChar = text;
+	qboolean nameBegan = qfalse;
+
+	while (*srcChar)
+	{
+		if (!nameBegan)
+		{
+			if (isblank((unsigned char)(*srcChar)))	
+			{
+				++srcChar;
+			} 
+			else 
+			{
+				if (Q_IsColorStringExt(srcChar))
+				{
+					*(destChar++) = *(srcChar++);
+				} 
+				else 
+				{
+					nameBegan = qtrue;
+				}
+
+				*(destChar++) = *(srcChar++); 
+			}
+		}
+		else
+		{
+			*(destChar++) = *(srcChar++);
+		}
+
+	}
+	*destChar = '\0';
+}
+
+/*
 Q_strstrip
 
 	Description:	Replace strip[x] in string with repl[x] or remove characters entirely

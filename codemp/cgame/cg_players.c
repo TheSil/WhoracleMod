@@ -1583,7 +1583,8 @@ void CG_NewClientInfo( int clientNum, qboolean entitiesInitialized ) {
 	// isolate the player's name
 	v = Info_ValueForKey(configstring, "n");
 	Q_strncpyz( newInfo.name, v, sizeof( newInfo.name ) );
-	Q_strncpyz( newInfo.cleanname, v, sizeof( newInfo.cleanname ) );
+	Q_StripSpaces( newInfo.name );
+	Q_strncpyz( newInfo.cleanname, newInfo.name, sizeof( newInfo.cleanname ) );
 	Q_StripColor( newInfo.cleanname );
 
 	// colors
