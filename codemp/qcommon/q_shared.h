@@ -766,6 +766,8 @@ CT_ICON_BLUE,
 CT_NO_AMMO_RED,
 CT_HUD_ORANGE,
 
+CT_TRANSP,
+
 CT_MAX
 } ct_table_t;
 

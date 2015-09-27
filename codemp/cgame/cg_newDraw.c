@@ -141,6 +141,48 @@ qboolean CG_YourTeamHasFlag(void) {
 	return qfalse;
 }
 
+qboolean CG_YourTeamFlagIsDropped(void)
+{
+	if (cgs.gametype == GT_CTF || cgs.gametype == GT_CTY)
+	{
+		int team = cg.snap->ps.persistant[PERS_TEAM];
+		if (team == TEAM_RED && cgs.redflag == FLAG_DROPPED)
+		{
+			return qtrue;
+		}
+		else if (team == TEAM_BLUE && cgs.blueflag == FLAG_DROPPED)
+		{
+			return qtrue;
+		}
+		else
+		{
+			return qfalse;
+		}
+	}
+	return qfalse;
+}
+
+qboolean CG_OtherTeamFlagIsDropped(void)
+{
+	if (cgs.gametype == GT_CTF || cgs.gametype == GT_CTY)
+	{
+		int team = cg.snap->ps.persistant[PERS_TEAM];
+		if (team == TEAM_RED && cgs.blueflag == FLAG_DROPPED)
+		{
+			return qtrue;
+		}
+		else if (team == TEAM_BLUE && cgs.redflag == FLAG_DROPPED)
+		{
+			return qtrue;
+		}
+		else
+		{
+			return qfalse;
+		}
+	}
+	return qfalse;
+}
+
 // THINKABOUTME: should these be exclusive or inclusive..
 //
 qboolean CG_OwnerDrawVisible(int flags) {

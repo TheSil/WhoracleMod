@@ -178,6 +178,22 @@ void CG_Text_Paint(float x, float y, float scale, vec4_t color, const char *text
 
 /*
 ================
+CG_RegisterShaderNoMip
+
+Loads given shader only if not previously loaded successfuly
+================
+*/
+
+void CG_RegisterShaderNoMip(qhandle_t* handle, const char* shaderName)
+{	
+	if (handle && !(*handle))
+	{
+		*handle = trap->R_RegisterShaderNoMip(shaderName);
+	}
+}
+
+/*
+================
 CG_DrawZoomMask
 
 ================
@@ -6915,10 +6931,38 @@ void CG_DrawTimedMenus() {
 	}
 }
 
+void CG_LoadFlagsGraphics()
+{
+	if (cgs.gametype == GT_CTY)
+	{		
+		CG_RegisterShaderNoMip(&cgs.media.redYsalimiriFlagShader, "gfx/hud/mpi_rflag_ys");
+		CG_RegisterShaderNoMip(&cgs.media.blueYsalimiriFlagShader, "gfx/hud/mpi_bflag_ys");
+	}
+
+	CG_RegisterShaderNoMip(&cgs.media.redFlagShader, "gfx/hud/mpi_rflag");
+	CG_RegisterShaderNoMip(&cgs.media.redFlagTakenShader, "gfx/hud/mpi_rflag_x");	
+
+	CG_RegisterShaderNoMip(&cgs.media.blueFlagShader, "gfx/hud/mpi_bflag");
+	CG_RegisterShaderNoMip(&cgs.media.blueFlagTakenShader, "gfx/hud/mpi_bflag_x");
+
+	CG_RegisterShaderNoMip(&cgs.media.redFlagDroppedShader, "gfx/hud/mpi_rflag_dropped");
+	CG_RegisterShaderNoMip(&cgs.media.blueFlagDroppedShader, "gfx/hud/mpi_bflag_dropped");
+
+	// these shaders are special, so if they fail to load, load default red/blue flags
+	// shaders, and distinguish them only by transparency later
+	if (!cgs.media.redFlagDroppedShader || !cgs.media.blueFlagDroppedShader)
+	{
+		cgs.media.redFlagDroppedShader = cgs.media.redFlagShader;
+		cgs.media.blueFlagDroppedShader = cgs.media.blueFlagShader;
+	}
+}
+
 void CG_DrawFlagStatus()
 {
 	int myFlagTakenShader = 0;
 	int theirFlagShader = 0;
+	int myFlagDroppedShader = 0;
+	int theirFlagDroppedShader = 0; 
 	int team = 0;
 	int startDrawPos = 2;
 	int ico_size = 32;
@@ -6938,30 +6982,36 @@ void CG_DrawFlagStatus()
 
 	team = cg.snap->ps.persistant[PERS_TEAM];
 
+	CG_LoadFlagsGraphics();
+
 	if (cgs.gametype == GT_CTY)
 	{
 		if (team == TEAM_RED)
 		{
-			myFlagTakenShader = trap->R_RegisterShaderNoMip( "gfx/hud/mpi_rflag_x" );
-			theirFlagShader = trap->R_RegisterShaderNoMip( "gfx/hud/mpi_bflag_ys" );
+			myFlagTakenShader = cgs.media.redFlagTakenShader;
+			theirFlagShader = cgs.media.redYsalimiriFlagShader;
 		}
 		else
 		{
-			myFlagTakenShader = trap->R_RegisterShaderNoMip( "gfx/hud/mpi_bflag_x" );
-			theirFlagShader = trap->R_RegisterShaderNoMip( "gfx/hud/mpi_rflag_ys" );
+			myFlagTakenShader = cgs.media.blueFlagTakenShader;
+			theirFlagShader = cgs.media.blueYsalimiriFlagShader;
 		}
 	}
 	else
 	{
 		if (team == TEAM_RED)
 		{
-			myFlagTakenShader = trap->R_RegisterShaderNoMip( "gfx/hud/mpi_rflag_x" );
-			theirFlagShader = trap->R_RegisterShaderNoMip( "gfx/hud/mpi_bflag" );
+			myFlagTakenShader = cgs.media.redFlagTakenShader;
+			theirFlagShader = cgs.media.blueFlagShader;
+			myFlagDroppedShader = cgs.media.redFlagDroppedShader;
+			theirFlagDroppedShader = cgs.media.blueFlagDroppedShader;
 		}
 		else
 		{
-			myFlagTakenShader = trap->R_RegisterShaderNoMip( "gfx/hud/mpi_bflag_x" );
-			theirFlagShader = trap->R_RegisterShaderNoMip( "gfx/hud/mpi_rflag" );
+			myFlagTakenShader = cgs.media.blueFlagTakenShader;
+			theirFlagShader = cgs.media.redFlagShader;
+			myFlagDroppedShader = cgs.media.blueFlagDroppedShader;
+			theirFlagDroppedShader = cgs.media.redFlagDroppedShader;
 		}
 	}
 
@@ -6971,11 +7021,31 @@ void CG_DrawFlagStatus()
 		CG_DrawPic( 2, 330-startDrawPos, ico_size, ico_size, theirFlagShader );
 		startDrawPos += ico_size+2;
 	}
+	else if (cg_drawDroppedFlag.integer && CG_OtherTeamFlagIsDropped())
+	{
+		trap->R_SetColor(colorTable[CT_TRANSP]);
+
+		CG_DrawPic(2, 330 - startDrawPos, ico_size, ico_size,
+			(cg_drawDroppedFlag.integer == 2) ? theirFlagShader : theirFlagDroppedShader);
+
+		trap->R_SetColor(NULL);
+		startDrawPos += ico_size + 2;
+	}
 
 	if (CG_OtherTeamHasFlag())
 	{
 		//CG_DrawPic( startDrawPos, 330, ico_size, ico_size, myFlagTakenShader );
 		CG_DrawPic( 2, 330-startDrawPos, ico_size, ico_size, myFlagTakenShader );
+	}
+	else if (cg_drawDroppedFlag.integer && CG_YourTeamFlagIsDropped())
+	{
+		trap->R_SetColor(colorTable[CT_TRANSP]);
+
+		CG_DrawPic(2, 330 - startDrawPos, ico_size, ico_size,
+			(cg_drawDroppedFlag.integer == 2) ? myFlagTakenShader : myFlagDroppedShader);
+
+		trap->R_SetColor(NULL);
+		startDrawPos += ico_size + 2;
 	}
 }
 

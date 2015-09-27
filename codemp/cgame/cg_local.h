@@ -1353,6 +1353,16 @@ typedef struct cgMedia_s {
 	qhandle_t selectCursor;
 	qhandle_t sizeCursor;
 
+	qhandle_t redFlagShader;
+	qhandle_t redFlagTakenShader;
+	qhandle_t redFlagDroppedShader;
+	qhandle_t blueFlagShader;
+	qhandle_t blueFlagTakenShader;
+	qhandle_t blueFlagDroppedShader;
+
+	qhandle_t redYsalimiriFlagShader;
+	qhandle_t blueYsalimiriFlagShader;
+
 	//weapon icons
 	qhandle_t weaponIcons[WP_NUM_WEAPONS];
 	qhandle_t weaponIcons_NA[WP_NUM_WEAPONS];
@@ -1777,6 +1787,8 @@ void CG_Draw3DModel( float x, float y, float w, float h, qhandle_t model, void *
 void CG_Text_PaintChar(float x, float y, float width, float height, float scale, float s, float t, float s2, float t2, qhandle_t hShader);
 qboolean CG_YourTeamHasFlag(void);
 qboolean CG_OtherTeamHasFlag(void);
+qboolean CG_YourTeamFlagIsDropped(void);
+qboolean CG_OtherTeamFlagIsDropped(void);
 qhandle_t CG_StatusHandle(int task);
 
 

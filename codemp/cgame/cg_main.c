@@ -124,6 +124,8 @@ vec4_t colorTable[CT_MAX] =
 	{	.515f,	.406f,	.507f,	1},		// CT_NO_AMMO_RED
 	{   1.0f,   .658f,  .062f, 1},		// CT_HUD_ORANGE
 
+	{	1.0f,	1.0f,	1.0f,	0.333f },//CT_TRANSP
+
 };
 
 void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum );
