@@ -8218,9 +8218,8 @@ static void CG_Draw2D( void ) {
 		CG_DrawUpperRight();
 	}
 
-	if ( !CG_DrawFollow() ) {
-		CG_DrawWarmup();
-	}
+	CG_DrawFollow();
+	CG_DrawWarmup();
 
 	if (cgSiegeRoundState)
 	{
