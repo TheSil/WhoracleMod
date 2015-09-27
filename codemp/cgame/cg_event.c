@@ -2776,6 +2776,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 
 	case EV_BODYFADE:
+		DEBUGNAME("EV_BODYFADE");
 		if (es->eType != ET_BODY)
 		{
 			assert(!"EV_BODYFADE event from a non-corpse");
