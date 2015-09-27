@@ -1115,9 +1115,6 @@ void CG_DrawWeaponSelect( void ) {
 		return;
 	}
 
-	// showing weapon select clears pickup item display, but not the blend blob
-	cg.itemPickupTime = 0;
-
 	bits = cg.predictedPlayerState.stats[ STAT_WEAPONS ];
 
 	// count the number of weapons owned
