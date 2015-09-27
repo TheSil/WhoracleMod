@@ -33,7 +33,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #define		SIEGE_ROUND_BEGIN_TIME				5000 //delay 5 secs after players are in game.
 
-#define		MAX_SIEGE_CLASSES					128 //up to 128 classes
+#define		MAX_SIEGE_CLASSES					1024 //up to 128 classes
 #define		MAX_SIEGE_CLASSES_PER_TEAM			16
 
 #define		MAX_SIEGE_TEAMS						16 //up to 16 diffent teams
