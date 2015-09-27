@@ -875,22 +875,29 @@ void CG_AddViewWeapon( playerState_t *ps ) {
 			ci = &cgs.clientinfo[ cent->currentState.clientNum ];
 		}
 
-		trap->G2API_GetBoneFrame(cent->ghoul2, "lower_lumbar", cg.time, &currentFrame, cgs.gameModels, 0);
-		hand.frame = CG_MapTorsoToWeaponFrame( ci, ceil( currentFrame ), ps->torsoAnim );
-		hand.oldframe = CG_MapTorsoToWeaponFrame( ci, floor( currentFrame ), ps->torsoAnim );
-		hand.backlerp = 1.0f - (currentFrame-floor(currentFrame));
+		hand.frame = 0;
+		hand.oldframe = 0;
+		hand.backlerp = 0;
 
-		// Handle the fringe situation where oldframe is invalid
-		if ( hand.frame == -1 )
+		if (cent->ghoul2)
 		{
-			hand.frame = 0;
-			hand.oldframe = 0;
-			hand.backlerp = 0;
-		}
-		else if ( hand.oldframe == -1 )
-		{
-			hand.oldframe = hand.frame;
-			hand.backlerp = 0;
+			trap->G2API_GetBoneFrame(cent->ghoul2, "lower_lumbar", cg.time, &currentFrame, cgs.gameModels, 0);
+			hand.frame = CG_MapTorsoToWeaponFrame(ci, ceil(currentFrame), ps->torsoAnim);
+			hand.oldframe = CG_MapTorsoToWeaponFrame(ci, floor(currentFrame), ps->torsoAnim);
+			hand.backlerp = 1.0f - (currentFrame - floor(currentFrame));
+
+			// Handle the fringe situation where oldframe is invalid
+			if (hand.frame == -1)
+			{
+				hand.frame = 0;
+				hand.oldframe = 0;
+				hand.backlerp = 0;
+			}
+			else if (hand.oldframe == -1)
+			{
+				hand.oldframe = hand.frame;
+				hand.backlerp = 0;
+			}
 		}
 	}
 
