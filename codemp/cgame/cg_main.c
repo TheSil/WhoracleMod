@@ -647,11 +647,15 @@ void CG_ParseSiegeState(const char *str)
 		}
 		b[j] = 0;
 //		if (cgSiegeRoundState != prevState)
-		{ //it changed
-			cgSiegeRoundTime = atoi(b);
+		{ //it changed	
 			if (cgSiegeRoundState == 0 || cgSiegeRoundState == 2)
 			{
-				cgSiegeRoundBeganTime = cgSiegeRoundTime;
+				int roundTime = atoi(b);
+				if (cgSiegeRoundState == 2)
+				{
+					cgSiegeRoundTime = roundTime;
+				}
+				cgSiegeRoundBeganTime = roundTime;
 			}
 		}
 	}
