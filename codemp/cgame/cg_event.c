@@ -1556,7 +1556,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 
 	case EV_JUMP:
 		DEBUGNAME("EV_JUMP");
-		if (cg_jumpSounds.integer)
+		if (cg_jumpSounds.integer && !(cg_jumpSounds.integer == 2 && es->number == cg.snap->ps.clientNum))
 		{
 			trap->S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.wav" ) );
 		}
