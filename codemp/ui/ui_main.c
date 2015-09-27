@@ -8295,7 +8295,13 @@ static const char *UI_FeederItemText(float feederID, int index, int column,
 			switch (column) {
 				case SORT_HOST :
 					if (ping <= 0) {
-						return Info_ValueForKey(info, "addr");
+						// prefer showing server name if possible (if we remember it)
+						char* name = Info_ValueForKey(info, "hostname");
+						if (name[0] == '\0') {
+							name = Info_ValueForKey(info, "addr");
+						}
+
+						return name;
 					} else {
 						int gametype = atoi( Info_ValueForKey( info, "gametype" ) );
 						//check for password
