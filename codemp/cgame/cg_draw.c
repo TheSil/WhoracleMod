@@ -4027,26 +4027,15 @@ static void CG_DrawPowerupIcons(int y)
 		{
 			int secondsleft = (cg.snap->ps.powerups[j] - cg.time)/1000;
 
+			if (j == PW_REDFLAG || j == PW_BLUEFLAG)
+				continue;
+
 			item = BG_FindItemForPowerup( j );
 
 			if (item)
 			{
 				int icoShader = 0;
-				if (cgs.gametype == GT_CTY && (j == PW_REDFLAG || j == PW_BLUEFLAG))
-				{
-					if (j == PW_REDFLAG)
-					{
-						icoShader = trap->R_RegisterShaderNoMip( "gfx/hud/mpi_rflag_ys" );
-					}
-					else
-					{
-						icoShader = trap->R_RegisterShaderNoMip( "gfx/hud/mpi_bflag_ys" );
-					}
-				}
-				else
-				{
-					icoShader = trap->R_RegisterShader( item->icon );
-				}
+				icoShader = trap->R_RegisterShader( item->icon );
 
 				CG_DrawPic( (640-(ico_size*1.1)) + xOffset, y, ico_size, ico_size, icoShader );
 
