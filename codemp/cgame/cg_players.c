@@ -1910,8 +1910,6 @@ void CG_NewClientInfo( int clientNum, qboolean entitiesInitialized ) {
 
 			//rww - Set the animation again because it just got reset due to the model change
 			trap->G2API_SetBoneAnim(ci->ghoul2Model, 0, "model_root", firstFrame, anim->firstFrame + anim->numFrames, flags, animSpeed, cg.time, setFrame, 150);
-
-			cg_entities[clientNum].currentState.legsAnim = 0;
 		}
 
 		anim = &bgHumanoidAnimations[ (cg_entities[clientNum].currentState.torsoAnim) ];
@@ -1935,8 +1933,6 @@ void CG_NewClientInfo( int clientNum, qboolean entitiesInitialized ) {
 
 			//rww - Set the animation again because it just got reset due to the model change
 			trap->G2API_SetBoneAnim(ci->ghoul2Model, 0, "lower_lumbar", firstFrame, anim->firstFrame + anim->numFrames, flags, animSpeed, cg.time, setFrame, 150);
-
-			cg_entities[clientNum].currentState.torsoAnim = 0;
 		}
 
 		if (cg_entities[clientNum].ghoul2 && trap->G2_HaveWeGhoul2Models(cg_entities[clientNum].ghoul2))
