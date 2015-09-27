@@ -913,11 +913,6 @@ void CG_SiegeObjectiveCompleted(centity_t *ent, int won, int objectivenum)
 
 	myTeam = ps->persistant[PERS_TEAM];
 
-	if (myTeam == TEAM_SPECTATOR)
-	{
-		return;
-	}
-
 	if (won == SIEGETEAM_TEAM1)
 	{
 		Com_sprintf(teamstr, sizeof(teamstr), team1);
