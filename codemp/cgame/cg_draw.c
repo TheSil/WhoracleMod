@@ -4933,11 +4933,6 @@ static void CG_DrawCrosshair( vec3_t worldPoint, int chEntValid ) {
 		return;
 	}
 
-	if ( cg.predictedPlayerState.zoomMode != 0 )
-	{//not while scoped
-		return;
-	}
-
 	if ( cg_crosshairHealth.integer )
 	{
 		vec4_t		hcolor;
@@ -5235,7 +5230,11 @@ static void CG_DrawCrosshair( vec3_t worldPoint, int chEntValid ) {
 
 	chX = x + cg.refdef.x + 0.5 * (640 - w);
 	chY = y + cg.refdef.y + 0.5 * (480 - h);
-	trap->R_DrawStretchPic( chX, chY, w, h, 0, 0, 1, 1, hShader );
+
+	if (cg.predictedPlayerState.zoomMode == 0)
+	{//not while scoped
+		trap->R_DrawStretchPic(chX, chY, w, h, 0, 0, 1, 1, hShader);
+	}
 
 	//draw a health bar directly under the crosshair if we're looking at something
 	//that takes damage
