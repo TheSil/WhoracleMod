@@ -6252,13 +6252,14 @@ static void CG_ScanForCrosshairEntity( void ) {
 		}
 	}
 
-	if (cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR)
-	{
-		if (trace.entityNum < /*MAX_CLIENTS*/ENTITYNUM_WORLD)
+	if (trace.entityNum < /*MAX_CLIENTS*/ENTITYNUM_WORLD)
+	{		
+		cg.crosshairClientNum = trace.entityNum;
+		cg.crosshairClientTime = cg.time;
+
+		if (cg.crosshairClientNum < ENTITYNUM_WORLD)
 		{
 			centity_t *veh = &cg_entities[trace.entityNum];
-			cg.crosshairClientNum = trace.entityNum;
-			cg.crosshairClientTime = cg.time;
 
 			if (veh->currentState.eType == ET_NPC &&
 				veh->currentState.NPC_class == CLASS_VEHICLE &&
@@ -6268,17 +6269,13 @@ static void CG_ScanForCrosshairEntity( void ) {
 				cg.crosshairVehNum = veh->currentState.number;
 				cg.crosshairVehTime = cg.time;
 			}
+		}
 
-			CG_DrawCrosshair(trace.endpos, 1);
-		}
-		else
-		{
-			CG_DrawCrosshair(trace.endpos, 0);
-		}
+		CG_DrawCrosshair(trace.endpos, 1);
 	}
-
-	if ( trace.entityNum >= MAX_CLIENTS ) {
-		return;
+	else
+	{
+		CG_DrawCrosshair(trace.endpos, 0);
 	}
 
 	// if the player is in fog, don't show it
