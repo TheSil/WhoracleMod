@@ -3553,7 +3553,7 @@ qboolean Item_TextField_HandleKey(itemDef_t *item, int key) {
 
 			if ( key == A_DELETE || key == A_KP_PERIOD ) {
 				if ( item->cursorPos < len ) {
-					memmove( buff + item->cursorPos, buff + item->cursorPos + 1, len - item->cursorPos);
+					memmove( buff + item->cursorPos, buff + item->cursorPos + 1, strlen( buff ) - item->cursorPos);
 					DC->setCVar(item->cvar, buff);
 				}
 				return qtrue;
